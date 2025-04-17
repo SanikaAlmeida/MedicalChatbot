@@ -1,0 +1,48 @@
+
+# STEP 1:
+Loads your Hugging Face token from the .env file.
+Sets the model repo ID for the Mistral model you want to use.
+Uses LangChain’s HuggingFaceEndpoint to connect to Hugging Face’s hosted inference endpoint.
+Sets:
+temperature=0.5: Controls randomness of output (lower = more focused).
+max_length="512": Limits the length of the generated response.
+token=HF_TOKEN: Authenticates your access to Hugging Face’s hosted inference service.
+
+STEP 2:
+You're building a chatbot assistant. You want it to act like:
+“Hey, don’t make stuff up. Just use the PDF content I give you. Keep it short and direct.”
+That’s exactly what this template says.
+This function wraps your custom instructions (above) in a special LangChain object called PromptTemplate.
+So when the time comes, LangChain can do this
+Replace {context} with: “PDF content about job eligibility…”
+Replace {question} with: “What is the minimum qualification?”
+
+embedding_model = HuggingFaceEmbeddings(...)
+This is the same model you used earlier to turn text into vectors (embeddings).
+Why do you need it now again?
+Because:
+When someone asks a question like "Who is eligible for the job?"
+You need to convert that question into a vector, and compare it with your stored chunks.
+That’s how the chatbot finds the most relevant chunk to answer from.
+
+This line does:
+Load your saved memory of the PDF (db_faiss)
+Plug it back into LangChain
+So now your chatbot can search the PDF content when someone asks a question
+
+
+“Hey, use the Mistral LLM for answering questions.”
+"stuff" is the type of chain you're using.
+In LangChain terms, stuff means:
+“Take the relevant chunks from FAISS, stuff them into the prompt along with the question, and send to the LLM.”
+You're telling it:
+“When someone asks a question, search FAISS and return top 3 most relevant chunks.”
+k=3 means return 3 chunks that are closest in meaning to the question, using cosine similarity between embeddings.
+This adds transparency!
+After the LLM answers the question, you'll also get:
+“Which PDF chunks were used to answer?”
+So it helps you verify the source — very helpful for debugging or real use.
+You’re injecting your custom prompt into the chain.
+This is where you tell the LLM how to behave:
+“Only use the context. No small talk. Don’t guess.”
+If you don’t pass this, the default behavior might be chatty, vague, or inaccurate.

@@ -1,0 +1,35 @@
+PyPDFLoader & DirectoryLoader: For loading and reading PDF files (LangChain-compatible).
+RecursiveCharacterTextSplitter: Breaks long texts into smaller chunks (with overlap) so LLMs can process them effectively.
+HuggingFaceEmbeddings: Will later be used to create vector embeddings of the text chunks.
+FAISS: The vector database where the chunks will be stored and searched.
+load_dotenv(): Loads environment variables from a .env file — useful for managing API keys, model paths, etc., without hardcoding them.
+
+STEP 1:
+Sets the folder path to your PDFs.
+Uses DirectoryLoader to scan all .pdf files in the folder and loads them using PyPDFLoader.
+Returns a list of Document objects, where each page of each PDF becomes a single document.
+Why this matters: LLMs can't read PDFs directly — you first need to extract text from them.
+
+STEP 2:
+Takes the list of extracted documents (from PDFs).
+Splits each document into chunks of around 500 characters, with a 50-character overlap between chunks.
+The overlap helps preserve context across chunks.
+Returns a new list of smaller chunks that are easier for the LLM to handle.
+Why this matters: LLMs have a limited context window (e.g., 2048 tokens). Breaking down long text into chunks ensures the LLM can process it efficiently, and overlap improves continuity.
+
+STEP 3:
+HuggingFaceEmbeddings is used to load a sentence transformer model (all-MiniLM-L6-v2) from Hugging Face.
+This model converts text into dense vector representations (embeddings). These vectors capture semantic meaning of the text.
+all-MiniLM-L6-v2 is a lightweight and fast model that's great for tasks like semantic search and RAG pipelines.
+Why this matters:
+LLMs don’t understand text like humans. They need the text converted into a numerical format that reflects meaning.
+This embedding step allows you to later compare “how similar” a query is to different document chunks using cosine similarity or similar distance metrics.
+
+STEP 4:
+FAISS.from_documents(...):
+Takes all the text chunks from Step 2.
+Uses the embedding model from Step 3 to generate embeddings for each chunk.
+Stores those embeddings in a FAISS index (in-memory for now).
+db.save_local(...):
+Saves the FAISS index (with the embeddings + metadata) locally on disk at the path "vectorstore/db_faiss".
+This lets you reload it later without recalculating embeddings every time (useful for chatbot deployment).
